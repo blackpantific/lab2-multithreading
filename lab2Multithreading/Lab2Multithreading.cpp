@@ -14,11 +14,10 @@ enum FileFormat
 
 void qSort(int* a, int l, int r);
 void BrightnessConvertionPGMSinglethread(unsigned int* dataArray, int size);
+void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size);
 
 int main(int argc, char** argv)
 {
-	
-
 	char* bufIterator = NULL;
 	char* buf = NULL;
 	char* header = NULL;
@@ -35,7 +34,7 @@ int main(int argc, char** argv)
 	//string sNUM_OF_THREADS = argv[2];
 	//NUM_OF_THREADS = atoi(argv[2]);
 	//string file = argv[1];
-	ifstream in("PGM/Warm-and-Cool-Colors_20x20_8x8.pgm"/*argv[1]*/, ios::binary);//matrix.txt
+	ifstream in("PPM/Beach-Resort-Sunset-HD-Wallpaper-Background.ppm"/*argv[1]*/, ios::binary);//matrix.txt
 	int size = in.seekg(0, ios::end).tellg();
 	if (size == -1)
 		throw "File is empty";
@@ -50,7 +49,7 @@ int main(int argc, char** argv)
 	int index = 0;//индекс с которого начинаются данные изображения
 	int numbers = 0;//кол-во данных для обработки
 	
-	printf("\n%s", buf);
+	//printf("\n%s", buf);
 
 
 
@@ -120,9 +119,9 @@ int main(int argc, char** argv)
 	}
 	else {
 
-		int index = bufIterator - buf;
+		index = bufIterator - buf;
 
-		auto numbers = size - index;
+		numbers = size - index;
 		dataArray = (unsigned int*)calloc((numbers), sizeof(int));
 
 		for (size_t i = 0; i < numbers; i++)
@@ -130,10 +129,12 @@ int main(int argc, char** argv)
 			dataArray[i] = pixels[index + i];
 		}
 
-		/*for (size_t i = 0; i < numbers; i++)
+	/*	for (size_t i = 0; i < numbers; i++)
 		{
 			printf("\n%d", dataArray[i]);
 		}*/
+
+		BrightnessConvertionPPMSinglethread(dataArray, numbers);
 	}
 
 	for (size_t i = 0; i < numbers; i++)
@@ -143,7 +144,7 @@ int main(int argc, char** argv)
 	}
 
 	
-		printf("\n%s", buf);
+		//printf("\n%s", buf);
 
 		
 		fstream bin("bin.txt", ios::out | ios::binary);
@@ -164,12 +165,12 @@ void BrightnessConvertionPGMSinglethread(unsigned int* dataArray, int size)
 	int min = 0;
 	int max = 0;
 
-	cout << endl;
+	/*cout << endl;
 	for (int i = 0; i < size; i++) cout << dataArrayInt[i] << " ";
 	cout << endl;
 	cout << endl;
 	for (int i = 0; i < size; i++) cout << dataArray[i] << " ";
-	cout << endl;
+	cout << endl;*/
 
 
 	if (percent >= 1) {
@@ -224,9 +225,183 @@ void BrightnessConvertionPGMSinglethread(unsigned int* dataArray, int size)
 
 }
 
-void BrightnessConvertionPPMSinglethread()
+void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 {
+	auto sizeOfComponentArray = size / 3;
 
+	int percent = round((size * 0.39) / 100);
+	int roundPercent = round(percent/3);
+	int* dataArrayIntR = (int*)calloc(sizeOfComponentArray, sizeof(int));
+	int* dataArrayIntG = (int*)calloc(sizeOfComponentArray, sizeof(int));
+	int* dataArrayIntB = (int*)calloc(sizeOfComponentArray, sizeof(int));
+	
+	
+	/*cout << endl;
+	for (int i = 0; i < size; i++) cout << dataArray[i] << " ";
+	cout << endl;
+	cout << endl;*/
+
+	int iterator = 0;
+	for (size_t i = 0; i < size; i+=3)
+	{
+		dataArrayIntR[iterator] = dataArray[i];
+		//cout << dataArrayIntR[iterator] << " ";
+		dataArrayIntG[iterator] = dataArray[i + 1];
+		//cout << dataArrayIntG[iterator] << " ";
+		dataArrayIntB[iterator] = dataArray[i + 2];
+		//cout << dataArrayIntB[iterator] << " ";
+
+		iterator++;
+	}
+	
+	
+	//memcpy(dataArrayInt, dataArray, size * sizeof(int));
+	int minR = 0;
+	int maxR = 0;
+	int minG = 0;
+	int maxG = 0;
+	int minB = 0;
+	int maxB = 0;
+
+	int minGlobal = -1;
+	int maxGlobal = 256;
+
+
+
+	//cout << endl;
+	//cout << endl;
+	//for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntR[i] << " ";
+	//cout << endl;
+	//cout << endl;
+	//for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntG[i] << " ";
+	//cout << endl;
+	//cout << endl;
+	//for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntB[i] << " ";
+	//cout << endl;
+
+
+	if (percent >= 1) {
+
+		//---------------------------------------------------------------------------------------------
+		qSort(dataArrayIntR, 0, sizeOfComponentArray - 1);
+		minR = dataArrayIntR[0 + roundPercent];
+		maxR = dataArrayIntR[sizeOfComponentArray - 1 - roundPercent];
+		/*cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntR[i] << " ";
+		cout << endl;*/
+
+		qSort(dataArrayIntG, 0, sizeOfComponentArray - 1);
+		minG = dataArrayIntG[0 + roundPercent];
+		maxG = dataArrayIntG[sizeOfComponentArray - 1 - roundPercent];
+		/*cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntG[i] << " ";
+		cout << endl;*/
+
+		qSort(dataArrayIntB, 0, sizeOfComponentArray - 1);
+		minB = dataArrayIntB[0 + roundPercent];
+		maxB = dataArrayIntB[sizeOfComponentArray - 1 - roundPercent];
+		/*cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntB[i] << " ";
+		cout << endl;*/
+
+		int minArr[3] = { minR, minG, minB };
+		int maxArr[3] = { maxR, maxG, maxB };
+
+		for (size_t i = 0; i < 3; i++)
+		{
+			if (minGlobal < minArr[i]) {
+				minGlobal = minArr[i];
+			}
+			if (maxGlobal > maxArr[i]) {
+				maxGlobal = maxArr[i];
+			}
+		}
+
+
+		/*minGlobal = round((minR + minG + minB) / 3);
+		maxGlobal = round((maxR + maxG + maxB) / 3);*/
+
+		cout << endl;
+		for (int i = 0; i < 100; i++) cout << dataArray[i] << " ";
+		cout << endl;
+
+		for (size_t i = 0; i < size; i++)
+		{
+			int y = round((dataArray[i] - minGlobal) * 255 / (maxGlobal - minGlobal));
+			if (y < 0) {
+				y = 0;
+			}
+			else if (y > 255) {
+				y = 255;
+			}
+			dataArray[i] = y;
+
+		}
+
+		cout << endl;
+		for (int i = 0; i < 100; i++) cout << dataArray[i] << " ";
+		cout << endl;
+
+
+	}
+	else {
+		qSort(dataArrayIntR, 0, sizeOfComponentArray - 1);
+		minR = dataArrayIntR[0];
+		maxR = dataArrayIntR[sizeOfComponentArray - 1];
+		cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntR[i] << " ";
+		cout << endl;
+
+		qSort(dataArrayIntG, 0, sizeOfComponentArray - 1);
+		minG = dataArrayIntG[0];
+		maxG = dataArrayIntG[sizeOfComponentArray - 1];
+		cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntG[i] << " ";
+		cout << endl;
+
+		qSort(dataArrayIntB, 0, sizeOfComponentArray - 1);
+		minB = dataArrayIntB[0];
+		maxB = dataArrayIntB[sizeOfComponentArray - 1];
+		cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntB[i] << " ";
+		cout << endl;
+
+		int minArr[3] = { minR, minG, minB };
+		int maxArr[3] = { maxR, maxG, maxB };
+
+		for (size_t i = 0; i < 3; i++)
+		{
+			if (minGlobal > minArr[i]) {
+				minGlobal = minArr[i];
+			}
+			if (maxGlobal < maxArr[i]) {
+				maxGlobal = maxArr[i];
+			}
+		}
+
+
+		cout << endl;
+		for (int i = 0; i < size; i++) cout << dataArray[i] << " ";
+		cout << endl;
+
+		for (size_t i = 0; i < size; i++)
+		{
+			int y = round((dataArray[i] - minGlobal) * 255 / (maxGlobal - minGlobal));
+			if (y < 0) {
+				y = 0;
+			}
+			else if (y > 255) {
+				y = 255;
+			}
+			dataArray[i] = y;
+
+		}
+
+		cout << endl;
+		for (int i = 0; i < size; i++) cout << dataArray[i] << " ";
+		cout << endl;
+
+	}
 }
 
 void qSort(int* a, int l, int r)
