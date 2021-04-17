@@ -15,6 +15,8 @@ enum FileFormat
 void qSort(int* a, int l, int r);
 void BrightnessConvertionPGMSinglethread(unsigned int* dataArray, int size);
 void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size);
+void BrightnessConvertionPGMMultithread(unsigned int* dataArray, int size);
+void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size);
 
 int main(int argc, char** argv)
 {
@@ -29,13 +31,18 @@ int main(int argc, char** argv)
 	int max = 0;
 	unsigned int* dataArray = NULL;
 	unsigned char* pixels = NULL;
-
+	int index = 0;//индекс с которого начинаются данные изображения
+	int numbers = 0;//кол-во данных для обработки
+	int size = 0;
 
 	//string sNUM_OF_THREADS = argv[2];
 	//NUM_OF_THREADS = atoi(argv[2]);
 	//string file = argv[1];
-	ifstream in("PPM/Beach-Resort-Sunset-HD-Wallpaper-Background.ppm"/*argv[1]*/, ios::binary);//matrix.txt
-	int size = in.seekg(0, ios::end).tellg();
+
+	try {
+
+	ifstream in("PGM/199624.pgm"/*argv[1]*/, ios::binary);
+	size = in.seekg(0, ios::end).tellg();
 	if (size == -1)
 		throw "File is empty";
 	in.seekg(0);
@@ -45,13 +52,8 @@ int main(int argc, char** argv)
 	bufIterator = buf;
 	in.close();
 	string tempString = "";
-	pixels =  (unsigned char*)buf;
-	int index = 0;//индекс с которого начинаются данные изображения
-	int numbers = 0;//кол-во данных для обработки
+	pixels = (unsigned char*)buf;
 	
-	//printf("\n%s", buf);
-
-
 
 	string s1(1, buf[0]);
 	string s2(1, buf[1]);
@@ -62,6 +64,9 @@ int main(int argc, char** argv)
 	}
 	else if (concatenate == "P6") {
 		InputFileFormat = PPM;
+	}
+	else {
+		throw "Not a valid file";
 	}
 
 	bufIterator += 3;//переходим через 2 символа формата и 1 \n
@@ -98,54 +103,140 @@ int main(int argc, char** argv)
 	max = stoi(tempString);
 	bufIterator++;//тут начинаются данные файла
 
-	if (InputFileFormat == PGM) 
-	{
-		index = bufIterator - buf;
 
-		numbers = size - index;
-		dataArray = (unsigned int*)calloc((numbers), sizeof(int));
-	
-		for (size_t i = 0; i < numbers; i++)
-		{
-			dataArray[i] = pixels[index + i];
-		}
-
-		/*for (size_t i = 0; i < numbers; i++)
-		{
-			printf("\n%d", dataArray[i]);
-		}*/
-	
-		BrightnessConvertionPGMSinglethread(dataArray, numbers);
 	}
-	else {
+	catch (const char* msg) {
+		std::cout << msg << std::endl;
 
-		index = bufIterator - buf;
-
-		numbers = size - index;
-		dataArray = (unsigned int*)calloc((numbers), sizeof(int));
-
-		for (size_t i = 0; i < numbers; i++)
-		{
-			dataArray[i] = pixels[index + i];
-		}
-
-	/*	for (size_t i = 0; i < numbers; i++)
-		{
-			printf("\n%d", dataArray[i]);
-		}*/
-
-		BrightnessConvertionPPMSinglethread(dataArray, numbers);
 	}
+	catch (...) {
+		std::cout << "Unknown error" << std::endl;
+	}
+
+
+
+	float start_time, end_time;
+
+	if (NUM_OF_THREADS == -1) {
+		if (InputFileFormat == PGM)
+		{
+			index = bufIterator - buf;
+
+			numbers = size - index;
+			dataArray = (unsigned int*)calloc((numbers), sizeof(int));
+
+			for (size_t i = 0; i < numbers; i++)
+			{
+				dataArray[i] = pixels[index + i];
+			}
+			start_time = omp_get_wtime();
+			BrightnessConvertionPGMSinglethread(dataArray, numbers);
+			end_time = omp_get_wtime();
+			auto timeSingle = end_time - start_time;
+
+			printf("\nTime (%i thread(s)): %f ms\n", NUM_OF_THREADS, timeSingle*1000);
+		}
+		else {
+
+			index = bufIterator - buf;
+
+			numbers = size - index;
+			dataArray = (unsigned int*)calloc((numbers), sizeof(int));
+
+			for (size_t i = 0; i < numbers; i++)
+			{
+				dataArray[i] = pixels[index + i];
+			}
+			start_time = omp_get_wtime();
+			BrightnessConvertionPPMSinglethread(dataArray, numbers);
+			end_time = omp_get_wtime();
+			auto timeSingle = end_time - start_time;
+
+			printf("\nTime (%i thread(s)): %f ms\n", NUM_OF_THREADS, timeSingle*1000);
+		}
+	}
+	else if (NUM_OF_THREADS == 0) {
+		if (InputFileFormat == PGM)
+		{
+			index = bufIterator - buf;
+
+			numbers = size - index;
+			dataArray = (unsigned int*)calloc((numbers), sizeof(int));
+
+			for (size_t i = 0; i < numbers; i++)
+			{
+				dataArray[i] = pixels[index + i];
+			}
+			start_time = omp_get_wtime();
+			BrightnessConvertionPGMMultithread(dataArray, numbers);
+			end_time = omp_get_wtime();
+			auto timeMulti = end_time - start_time;
+			printf("\nTime (%i thread(s)): %f ms\n", NUM_OF_THREADS, timeMulti*1000);
+		}
+		else {
+
+			index = bufIterator - buf;
+
+			numbers = size - index;
+			dataArray = (unsigned int*)calloc((numbers), sizeof(int));
+
+			for (size_t i = 0; i < numbers; i++)
+			{
+				dataArray[i] = pixels[index + i];
+			}
+
+			start_time = omp_get_wtime();
+			BrightnessConvertionPPMMultithread(dataArray, numbers);
+			end_time = omp_get_wtime();
+			auto timeMulti = end_time - start_time;
+			printf("\nTime (%i thread(s)): %f ms\n", NUM_OF_THREADS, timeMulti*1000);
+		}
+	}
+	else if (NUM_OF_THREADS > 0) {
+
+		omp_set_num_threads(NUM_OF_THREADS);
+
+		if (InputFileFormat == PGM)
+		{
+			index = bufIterator - buf;
+
+			numbers = size - index;
+			dataArray = (unsigned int*)calloc((numbers), sizeof(int));
+
+			for (size_t i = 0; i < numbers; i++)
+			{
+				dataArray[i] = pixels[index + i];
+			}
+
+			start_time = omp_get_wtime();
+			BrightnessConvertionPGMMultithread(dataArray, numbers);
+			end_time = omp_get_wtime();
+			auto timeMulti = end_time - start_time;
+			printf("\nTime (%i thread(s)): %f ms\n", NUM_OF_THREADS, timeMulti*1000);
+		}
+		else {
+
+			index = bufIterator - buf;
+
+			numbers = size - index;
+			dataArray = (unsigned int*)calloc((numbers), sizeof(int));
+
+			for (size_t i = 0; i < numbers; i++)
+			{
+				dataArray[i] = pixels[index + i];
+			}
+
+			BrightnessConvertionPPMMultithread(dataArray, numbers);
+		}
+	}
+
+	
 
 	for (size_t i = 0; i < numbers; i++)
 	{
 		char val = (char)dataArray[i];
 		buf[i + index] = val;
 	}
-
-	
-		//printf("\n%s", buf);
-
 		
 		fstream bin("bin.txt", ios::out | ios::binary);
 		bin.write(buf, sizeof(char)*size);
@@ -156,6 +247,250 @@ int main(int argc, char** argv)
 
 
 
+void BrightnessConvertionPGMMultithread(unsigned int* dataArray, int size) {
+
+	double percent = (size * 0.39) / 100;
+	int roundPercent = round(percent);
+	int* dataArrayInt = (int*)calloc(size, sizeof(int));
+	memcpy(dataArrayInt, dataArray, size * sizeof(int));
+	int min = 0;
+	int max = 0;
+
+	if (percent >= 1) {
+		qSort(dataArrayInt, 0, size - 1);
+		min = dataArrayInt[0 + roundPercent/2];
+		max = dataArrayInt[size - 1 - roundPercent/2];
+		
+		
+
+#pragma omp parallel
+		{
+
+		int i = 0;
+
+#pragma omp for schedule(static, 1)
+		for (i = 0; i < size; i++)
+		{
+			int y = round((dataArray[i] - min) * 255 / (max - min));
+			if (y < 0) {
+				y = 0;
+			}
+			else if (y > 255) {
+				y = 255;
+			}
+			dataArray[i] = y;
+
+		}
+
+		}
+
+	}
+	else {
+		qSort(dataArrayInt, 0, size - 1);
+		min = dataArrayInt[0];
+		max = dataArrayInt[size - 1];
+
+
+#pragma omp parallel
+		{
+			int i = 0;
+
+#pragma omp for schedule(static, 1)
+			for (i = 0; i < size; i++)
+			{
+				int y = round((dataArray[i] - min) * 255 / (max - min));
+				if (y < 0) {
+					y = 0;
+				}
+				else if (y > 255) {
+					y = 255;
+				}
+				dataArray[i] = y;
+
+			}
+
+		}
+
+	}
+
+}
+
+void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
+{
+	auto sizeOfComponentArray = size / 3;
+
+	int percent = round((size * 0.39) / 100);
+	int roundPercent = round(percent / 3);
+	int* dataArrayIntR = (int*)calloc(sizeOfComponentArray, sizeof(int));
+	int* dataArrayIntG = (int*)calloc(sizeOfComponentArray, sizeof(int));
+	int* dataArrayIntB = (int*)calloc(sizeOfComponentArray, sizeof(int));
+
+
+	/*cout << endl;
+	for (int i = 0; i < size; i++) cout << dataArray[i] << " ";
+	cout << endl;
+	cout << endl;*/
+
+	int iterator = 0;
+	for (size_t i = 0; i < size; i += 3)
+	{
+		dataArrayIntR[iterator] = dataArray[i];
+		//cout << dataArrayIntR[iterator] << " ";
+		dataArrayIntG[iterator] = dataArray[i + 1];
+		//cout << dataArrayIntG[iterator] << " ";
+		dataArrayIntB[iterator] = dataArray[i + 2];
+		//cout << dataArrayIntB[iterator] << " ";
+
+		iterator++;
+	}
+
+	int minR = 0;
+	int maxR = 0;
+	int minG = 0;
+	int maxG = 0;
+	int minB = 0;
+	int maxB = 0;
+
+	int minGlobal = -1;
+	int maxGlobal = 256;
+
+
+
+	//cout << endl;
+	//cout << endl;
+	//for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntR[i] << " ";
+	//cout << endl;
+	//cout << endl;
+	//for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntG[i] << " ";
+	//cout << endl;
+	//cout << endl;
+	//for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntB[i] << " ";
+	//cout << endl;
+
+
+	if (percent >= 1) {
+
+		qSort(dataArrayIntR, 0, sizeOfComponentArray - 1);
+		minR = dataArrayIntR[0 + roundPercent];
+		maxR = dataArrayIntR[sizeOfComponentArray - 1 - roundPercent];
+		/*cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntR[i] << " ";
+		cout << endl;*/
+
+		qSort(dataArrayIntG, 0, sizeOfComponentArray - 1);
+		minG = dataArrayIntG[0 + roundPercent];
+		maxG = dataArrayIntG[sizeOfComponentArray - 1 - roundPercent];
+		/*cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntG[i] << " ";
+		cout << endl;*/
+
+		qSort(dataArrayIntB, 0, sizeOfComponentArray - 1);
+		minB = dataArrayIntB[0 + roundPercent];
+		maxB = dataArrayIntB[sizeOfComponentArray - 1 - roundPercent];
+		/*cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntB[i] << " ";
+		cout << endl;*/
+
+		int minArr[3] = { minR, minG, minB };
+		int maxArr[3] = { maxR, maxG, maxB };
+
+		for (size_t i = 0; i < 3; i++)
+		{
+			if (minGlobal < minArr[i]) {
+				minGlobal = minArr[i];
+			}
+			if (maxGlobal > maxArr[i]) {
+				maxGlobal = maxArr[i];
+			}
+		}
+
+
+		/*minGlobal = round((minR + minG + minB) / 3);
+		maxGlobal = round((maxR + maxG + maxB) / 3);*/
+
+		cout << endl;
+		for (int i = 0; i < 100; i++) cout << dataArray[i] << " ";
+		cout << endl;
+
+		for (size_t i = 0; i < size; i++)
+		{
+			int y = round((dataArray[i] - minGlobal) * 255 / (maxGlobal - minGlobal));
+			if (y < 0) {
+				y = 0;
+			}
+			else if (y > 255) {
+				y = 255;
+			}
+			dataArray[i] = y;
+
+		}
+
+		cout << endl;
+		for (int i = 0; i < 100; i++) cout << dataArray[i] << " ";
+		cout << endl;
+
+
+	}
+	else {
+		qSort(dataArrayIntR, 0, sizeOfComponentArray - 1);
+		minR = dataArrayIntR[0];
+		maxR = dataArrayIntR[sizeOfComponentArray - 1];
+		cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntR[i] << " ";
+		cout << endl;
+
+		qSort(dataArrayIntG, 0, sizeOfComponentArray - 1);
+		minG = dataArrayIntG[0];
+		maxG = dataArrayIntG[sizeOfComponentArray - 1];
+		cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntG[i] << " ";
+		cout << endl;
+
+		qSort(dataArrayIntB, 0, sizeOfComponentArray - 1);
+		minB = dataArrayIntB[0];
+		maxB = dataArrayIntB[sizeOfComponentArray - 1];
+		cout << endl;
+		for (int i = 0; i < sizeOfComponentArray; i++) cout << dataArrayIntB[i] << " ";
+		cout << endl;
+
+		int minArr[3] = { minR, minG, minB };
+		int maxArr[3] = { maxR, maxG, maxB };
+
+		for (size_t i = 0; i < 3; i++)
+		{
+			if (minGlobal > minArr[i]) {
+				minGlobal = minArr[i];
+			}
+			if (maxGlobal < maxArr[i]) {
+				maxGlobal = maxArr[i];
+			}
+		}
+
+
+		cout << endl;
+		for (int i = 0; i < size; i++) cout << dataArray[i] << " ";
+		cout << endl;
+
+		for (size_t i = 0; i < size; i++)
+		{
+			int y = round((dataArray[i] - minGlobal) * 255 / (maxGlobal - minGlobal));
+			if (y < 0) {
+				y = 0;
+			}
+			else if (y > 255) {
+				y = 255;
+			}
+			dataArray[i] = y;
+
+		}
+
+		cout << endl;
+		for (int i = 0; i < size; i++) cout << dataArray[i] << " ";
+		cout << endl;
+
+	}
+}
+
 void BrightnessConvertionPGMSinglethread(unsigned int* dataArray, int size) 
 {
 	double percent = (size * 0.39)/100;
@@ -165,21 +500,10 @@ void BrightnessConvertionPGMSinglethread(unsigned int* dataArray, int size)
 	int min = 0;
 	int max = 0;
 
-	/*cout << endl;
-	for (int i = 0; i < size; i++) cout << dataArrayInt[i] << " ";
-	cout << endl;
-	cout << endl;
-	for (int i = 0; i < size; i++) cout << dataArray[i] << " ";
-	cout << endl;*/
-
-
 	if (percent >= 1) {
 		qSort(dataArrayInt, 0, size - 1);
-		min = dataArrayInt[0 + roundPercent];
-		max = dataArrayInt[size - 1 - roundPercent];
-		/*cout << endl;
-		for (int i = 0; i < size; i++) cout << dataArrayInt[i] << " ";
-		cout << endl;*/
+		min = dataArrayInt[0 + roundPercent/2];
+		max = dataArrayInt[size - 1 - roundPercent/2];
 
 		for (size_t i = 0; i < size; i++)
 		{
@@ -199,10 +523,6 @@ void BrightnessConvertionPGMSinglethread(unsigned int* dataArray, int size)
 		qSort(dataArrayInt, 0, size - 1);
 		min = dataArrayInt[0];
 		max = dataArrayInt[size-1];
-		
-		cout << endl;
-		for (int i = 0; i < size; i++) cout << dataArray[i] << " ";
-		cout << endl;
 
 		for (size_t i = 0; i < size; i++)
 		{
@@ -216,10 +536,6 @@ void BrightnessConvertionPGMSinglethread(unsigned int* dataArray, int size)
 			dataArray[i] = y;
 
 		}
-
-		cout << endl;
-		for (int i = 0; i < size; i++) cout << dataArray[i] << " ";
-		cout << endl;
 
 	}
 
@@ -254,8 +570,6 @@ void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 		iterator++;
 	}
 	
-	
-	//memcpy(dataArrayInt, dataArray, size * sizeof(int));
 	int minR = 0;
 	int maxR = 0;
 	int minG = 0;
@@ -282,7 +596,6 @@ void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 
 	if (percent >= 1) {
 
-		//---------------------------------------------------------------------------------------------
 		qSort(dataArrayIntR, 0, sizeOfComponentArray - 1);
 		minR = dataArrayIntR[0 + roundPercent];
 		maxR = dataArrayIntR[sizeOfComponentArray - 1 - roundPercent];
