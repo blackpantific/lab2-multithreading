@@ -34,16 +34,17 @@ int main(int argc, char** argv)
 	int size = 0;
 	string tempString = "";
 
-	//string sNUM_OF_THREADS = argv[2];
-	//NUM_OF_THREADS = atoi(argv[2]);
-	//string file = argv[1];
+	
+	NUM_OF_THREADS = atoi(argv[3]);
+	string inputFile = argv[1];
+	string outputFile = argv[2];
 
 	try
 	{
 
 
 
-		ifstream in("PPM/199624.ppm"/*argv[1]*/, ios::binary);
+		ifstream in(/*"PPM/199624.ppm"*/inputFile, ios::binary);
 		size = in.seekg(0, ios::end).tellg();
 		if (size == -1)
 			throw "File is empty";
@@ -250,7 +251,7 @@ int main(int argc, char** argv)
 		buf[i + index] = val;
 	}
 		
-		fstream bin("bin.txt", ios::out | ios::binary);
+		fstream bin(outputFile, ios::out | ios::binary);
 		bin.write(buf, sizeof(char)*size);
 		bin.close();
 
