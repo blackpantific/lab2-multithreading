@@ -285,7 +285,7 @@ void BrightnessConvertionPGMMultithread(unsigned int* dataArray, int size) {
 
 		int i = 0;
 
-#pragma omp for schedule(dynamic, 1)
+#pragma omp for schedule(static)
 		for (i = 0; i < size; i++)
 		{
 			int y = round((dataArray[i] - min) * 255 / (max - min));
@@ -312,7 +312,7 @@ void BrightnessConvertionPGMMultithread(unsigned int* dataArray, int size) {
 		{
 			int i = 0;
 
-#pragma omp for schedule(dynamic, 1)
+#pragma omp for schedule(static)
 			for (i = 0; i < size; i++)
 			{
 				int y = round((dataArray[i] - min) * 255 / (max - min));
@@ -336,7 +336,7 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 {
 	auto sizeOfComponentArray = size / 3;
 
-	int percent = round((size * 0.39) / 100);
+	int percent = round((size * 0.39) / 100)/2;
 	int roundPercent = round(percent / 3);
 	int* dataArrayIntR = (int*)calloc(sizeOfComponentArray, sizeof(int));
 	int* dataArrayIntG = (int*)calloc(sizeOfComponentArray, sizeof(int));
@@ -365,7 +365,7 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 #pragma omp parallel 
 		{
 			int i = 0;
-#pragma omp for schedule(dynamic, 1)
+#pragma omp for schedule(static)
 			for (i = 0; i < 3; i++)
 			{
 				if (i == 0) {
@@ -388,7 +388,7 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 
 		}
 
-		for (size_t i = 0; i < 3; i++)
+		/*for (size_t i = 0; i < 3; i++)
 		{
 			if (minGlobal < minArr[i]) {
 				minGlobal = minArr[i];
@@ -396,13 +396,17 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 			if (maxGlobal > maxArr[i]) {
 				maxGlobal = maxArr[i];
 			}
-		}
+		}*/
+
+		minGlobal = (minArr[0] + minArr[1] + minArr[2]) / 3;
+		maxGlobal = (maxArr[0] + maxArr[1] + maxArr[2]) / 3;
+
 		int i = 0;
 
 #pragma omp parallel
 		{
 
-			#pragma omp for schedule(dynamic, 1)
+			#pragma omp for schedule(static)
 			for (i = 0; i < size; i++)
 			{
 				int y = round((dataArray[i] - minGlobal) * 255 / (maxGlobal - minGlobal));
@@ -423,7 +427,7 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 #pragma omp parallel 
 		{
 			int i = 0;
-#pragma omp for schedule(dynamic, 1)
+#pragma omp for schedule(static)
 			for (i = 0; i < 3; i++)
 			{
 				if (i == 0) {
@@ -443,7 +447,7 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 				}
 			}
 		}
-		for (size_t i = 0; i < 3; i++)
+		/*for (size_t i = 0; i < 3; i++)
 		{
 			if (minGlobal > minArr[i]) {
 				minGlobal = minArr[i];
@@ -451,12 +455,15 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 			if (maxGlobal < maxArr[i]) {
 				maxGlobal = maxArr[i];
 			}
-		}
+		}*/
+
+		minGlobal = (minArr[0] + minArr[1] + minArr[2]) / 3;
+		maxGlobal = (maxArr[0] + maxArr[1] + maxArr[2]) / 3;
 
 #pragma omp parallel
 		{
 			int i = 0;
-			#pragma omp for schedule(dynamic, 1)
+			#pragma omp for schedule(static)
 			for (i = 0; i < size; i++)
 			{
 				int y = round((dataArray[i] - minGlobal) * 255 / (maxGlobal - minGlobal));
@@ -529,7 +536,7 @@ void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 {
 	auto sizeOfComponentArray = size / 3;
 
-	int percent = round((size * 0.39) / 100);
+	int percent = round((size * 0.39) / 100)/2;
 	int roundPercent = round(percent/3);
 	int* dataArrayIntR = (int*)calloc(sizeOfComponentArray, sizeof(int));
 	int* dataArrayIntG = (int*)calloc(sizeOfComponentArray, sizeof(int));
@@ -574,15 +581,24 @@ void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 		int minArr[3] = { minR, minG, minB };
 		int maxArr[3] = { maxR, maxG, maxB };
 
-		for (size_t i = 0; i < 3; i++)
-		{
-			if (minGlobal < minArr[i]) {
-				minGlobal = minArr[i];
-			}
-			if (maxGlobal > maxArr[i]) {
-				maxGlobal = maxArr[i];
-			}
-		}
+
+
+
+		//for (size_t i = 0; i < 3; i++)
+		//{
+		//	if (minGlobal < minArr[i]) {
+		//		minGlobal = minArr[i];
+		//	}
+		//	if (maxGlobal > maxArr[i]) {
+		//		maxGlobal = maxArr[i];
+		//	}
+		//}
+
+		minGlobal = (minR + minG + minB) / 3;
+		maxGlobal = (maxR + maxG + maxB) / 3;
+
+
+
 
 		for (size_t i = 0; i < size; i++)
 		{
@@ -614,7 +630,10 @@ void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 		int minArr[3] = { minR, minG, minB };
 		int maxArr[3] = { maxR, maxG, maxB };
 
-		for (size_t i = 0; i < 3; i++)
+		minGlobal = (minR + minG + minB) / 3;
+		maxGlobal = (maxR + maxG + maxB) / 3;
+
+		/*for (size_t i = 0; i < 3; i++)
 		{
 			if (minGlobal > minArr[i]) {
 				minGlobal = minArr[i];
@@ -622,7 +641,7 @@ void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 			if (maxGlobal < maxArr[i]) {
 				maxGlobal = maxArr[i];
 			}
-		}
+		}*/
 
 		for (size_t i = 0; i < size; i++)
 		{
