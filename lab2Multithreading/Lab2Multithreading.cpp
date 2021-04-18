@@ -338,70 +338,62 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 {
 	auto sizeOfComponentArray = size / 3;
 
-	int percent = round((size * 0.39) / 100)/2;
+	int percent = round((size * 0.39) / 100);
 	int roundPercent = round(percent / 3);
-	int* dataArrayIntR = (int*)calloc(sizeOfComponentArray, sizeof(int));
-	int* dataArrayIntG = (int*)calloc(sizeOfComponentArray, sizeof(int));
-	int* dataArrayIntB = (int*)calloc(sizeOfComponentArray, sizeof(int));
+
+	int minR = 256;
+	int maxR = 0;
+	int minG = 256;
+	int maxG = 0;
+	int minB = 256;
+	int maxB = 0;
+
+	int minGlobal = 256;
+	int maxGlobal = -1;
+
 
 	int iterator = 0;
-
-
-	for (size_t i = 0; i < size; i += 3)//нет смысла параллелить
+	for (size_t i = 0; i < size; i += 3)
 	{
-		dataArrayIntR[iterator] = dataArray[i];
-		dataArrayIntG[iterator] = dataArray[i + 1];
-		dataArrayIntB[iterator] = dataArray[i + 2];
+
+		if (minR > dataArray[i])
+			minR = dataArray[i];
+
+		if (minG > dataArray[i + 1])
+			minG = dataArray[i + 1];
+
+		if (minB > dataArray[i + 2])
+			minB = dataArray[i + 2];
+
+		if (maxR < dataArray[i])
+			maxR = dataArray[i];
+
+		if (maxG < dataArray[i + 1])
+			maxG = dataArray[i + 1];
+
+		if (maxB < dataArray[i + 2])
+			maxB = dataArray[i + 2];
+
+
 
 		iterator++;
 	}
 
-	int* minArr = (int*)calloc(3, sizeof(int));
-	int* maxArr = (int*)calloc(3, sizeof(int));
+	int minArr[3] = { minR, minG, minB };
+	int maxArr[3] = { maxR, maxG, maxB };
 
-	int minGlobal = -1;
-	int maxGlobal = 256;
 
 	if (percent >= 1) {
 
-#pragma omp parallel 
+		for (size_t i = 0; i < 3; i++)
 		{
-			int i = 0;
-#pragma omp for schedule(static)
-			for (i = 0; i < 3; i++)
-			{
-				if (i == 0) {
-					qSort(dataArrayIntR, 0, sizeOfComponentArray - 1);
-					minArr[i] = dataArrayIntR[0 + roundPercent];
-					maxArr[i] = dataArrayIntR[sizeOfComponentArray - 1 - roundPercent];
-				}
-				else if (i == 1) {
-					qSort(dataArrayIntG, 0, sizeOfComponentArray - 1);
-					minArr[i] = dataArrayIntG[0 + roundPercent];
-					maxArr[i] = dataArrayIntG[sizeOfComponentArray - 1 - roundPercent];
-				}
-				else if (i == 2) {
-					qSort(dataArrayIntB, 0, sizeOfComponentArray - 1);
-					minArr[i] = dataArrayIntB[0 + roundPercent];
-					maxArr[i] = dataArrayIntB[sizeOfComponentArray - 1 - roundPercent];
-				}
-			}
-
-
-		}
-
-		/*for (size_t i = 0; i < 3; i++)
-		{
-			if (minGlobal < minArr[i]) {
+			if (minGlobal > minArr[i]) {
 				minGlobal = minArr[i];
 			}
-			if (maxGlobal > maxArr[i]) {
+			if (maxGlobal < maxArr[i]) {
 				maxGlobal = maxArr[i];
 			}
-		}*/
-
-		minGlobal = (minArr[0] + minArr[1] + minArr[2]) / 3;
-		maxGlobal = (maxArr[0] + maxArr[1] + maxArr[2]) / 3;
+		}
 
 		int i = 0;
 
@@ -426,30 +418,7 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 	}
 	else {
 
-#pragma omp parallel 
-		{
-			int i = 0;
-#pragma omp for schedule(static)
-			for (i = 0; i < 3; i++)
-			{
-				if (i == 0) {
-					qSort(dataArrayIntR, 0, sizeOfComponentArray - 1);
-					minArr[i] = dataArrayIntR[0 + roundPercent];
-					maxArr[i] = dataArrayIntR[sizeOfComponentArray - 1 - roundPercent];
-				}
-				else if (i == 1) {
-					qSort(dataArrayIntG, 0, sizeOfComponentArray - 1);
-					minArr[i] = dataArrayIntG[0 + roundPercent];
-					maxArr[i] = dataArrayIntG[sizeOfComponentArray - 1 - roundPercent];
-				}
-				else if (i == 2) {
-					qSort(dataArrayIntB, 0, sizeOfComponentArray - 1);
-					minArr[i] = dataArrayIntB[0 + roundPercent];
-					maxArr[i] = dataArrayIntB[sizeOfComponentArray - 1 - roundPercent];
-				}
-			}
-		}
-		/*for (size_t i = 0; i < 3; i++)
+		for (size_t i = 0; i < 3; i++)
 		{
 			if (minGlobal > minArr[i]) {
 				minGlobal = minArr[i];
@@ -457,10 +426,7 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 			if (maxGlobal < maxArr[i]) {
 				maxGlobal = maxArr[i];
 			}
-		}*/
-
-		minGlobal = (minArr[0] + minArr[1] + minArr[2]) / 3;
-		maxGlobal = (maxArr[0] + maxArr[1] + maxArr[2]) / 3;
+		}
 
 #pragma omp parallel
 		{
@@ -482,11 +448,6 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 		}
 
 	}
-
-	free(dataArrayIntR);
-	free(dataArrayIntG);
-	free(dataArrayIntB);
-
 }
 
 void BrightnessConvertionPGMSinglethread(unsigned int* dataArray, int size) 
@@ -546,69 +507,61 @@ void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 {
 	auto sizeOfComponentArray = size / 3;
 
-	int percent = round((size * 0.39) / 100)/2;
+	int percent = round((size * 0.39) / 100);
 	int roundPercent = round(percent/3);
-	int* dataArrayIntR = (int*)calloc(sizeOfComponentArray, sizeof(int));
-	int* dataArrayIntG = (int*)calloc(sizeOfComponentArray, sizeof(int));
-	int* dataArrayIntB = (int*)calloc(sizeOfComponentArray, sizeof(int));
 
+	int minR = 256;
+	int maxR = 0;
+	int minG = 256;
+	int maxG = 0;
+	int minB = 256;
+	int maxB = 0;
+
+	int minGlobal = 256;
+	int maxGlobal = -1;
 
 	int iterator = 0;
 	for (size_t i = 0; i < size; i+=3)
 	{
-		dataArrayIntR[iterator] = dataArray[i];
-		dataArrayIntG[iterator] = dataArray[i + 1];
-		dataArrayIntB[iterator] = dataArray[i + 2];
+		
+		if (minR > dataArray[i])
+			minR = dataArray[i];
+
+		if (minG > dataArray[i+1])
+			minG = dataArray[i+1];
+
+		if (minB > dataArray[i+2])
+			minB = dataArray[i+2];
+
+		if (maxR < dataArray[i])
+			maxR = dataArray[i];
+
+		if (maxG < dataArray[i + 1])
+			maxG = dataArray[i+1];
+
+		if (maxB < dataArray[i + 2])
+			maxB = dataArray[i + 2];
+
 
 		iterator++;
 	}
 	
-	int minR = 0;
-	int maxR = 0;
-	int minG = 0;
-	int maxG = 0;
-	int minB = 0;
-	int maxB = 0;
-
-	int minGlobal = -1;
-	int maxGlobal = 256;
 
 
 	if (percent >= 1) {
 
-		qSort(dataArrayIntR, 0, sizeOfComponentArray - 1);
-		minR = dataArrayIntR[0 + roundPercent];
-		maxR = dataArrayIntR[sizeOfComponentArray - 1 - roundPercent];
-
-		qSort(dataArrayIntG, 0, sizeOfComponentArray - 1);
-		minG = dataArrayIntG[0 + roundPercent];
-		maxG = dataArrayIntG[sizeOfComponentArray - 1 - roundPercent];
-
-		qSort(dataArrayIntB, 0, sizeOfComponentArray - 1);
-		minB = dataArrayIntB[0 + roundPercent];
-		maxB = dataArrayIntB[sizeOfComponentArray - 1 - roundPercent];
-
 		int minArr[3] = { minR, minG, minB };
 		int maxArr[3] = { maxR, maxG, maxB };
 
-
-
-
-		//for (size_t i = 0; i < 3; i++)
-		//{
-		//	if (minGlobal < minArr[i]) {
-		//		minGlobal = minArr[i];
-		//	}
-		//	if (maxGlobal > maxArr[i]) {
-		//		maxGlobal = maxArr[i];
-		//	}
-		//}
-
-		minGlobal = (minR + minG + minB) / 3;
-		maxGlobal = (maxR + maxG + maxB) / 3;
-
-
-
+		for (size_t i = 0; i < 3; i++)
+		{
+			if (minGlobal > minArr[i]) {
+				minGlobal = minArr[i];
+			}
+			if (maxGlobal < maxArr[i]) {
+				maxGlobal = maxArr[i];
+			}
+		}
 
 		for (size_t i = 0; i < size; i++)
 		{
@@ -625,25 +578,11 @@ void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 
 	}
 	else {
-		qSort(dataArrayIntR, 0, sizeOfComponentArray - 1);
-		minR = dataArrayIntR[0];
-		maxR = dataArrayIntR[sizeOfComponentArray - 1];
-
-		qSort(dataArrayIntG, 0, sizeOfComponentArray - 1);
-		minG = dataArrayIntG[0];
-		maxG = dataArrayIntG[sizeOfComponentArray - 1];
-
-		qSort(dataArrayIntB, 0, sizeOfComponentArray - 1);
-		minB = dataArrayIntB[0];
-		maxB = dataArrayIntB[sizeOfComponentArray - 1];
 
 		int minArr[3] = { minR, minG, minB };
 		int maxArr[3] = { maxR, maxG, maxB };
 
-		minGlobal = (minR + minG + minB) / 3;
-		maxGlobal = (maxR + maxG + maxB) / 3;
-
-		/*for (size_t i = 0; i < 3; i++)
+		for (size_t i = 0; i < 3; i++)
 		{
 			if (minGlobal > minArr[i]) {
 				minGlobal = minArr[i];
@@ -651,7 +590,7 @@ void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 			if (maxGlobal < maxArr[i]) {
 				maxGlobal = maxArr[i];
 			}
-		}*/
+		}
 
 		for (size_t i = 0; i < size; i++)
 		{
@@ -667,10 +606,6 @@ void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 		}
 
 	}
-
-	free(dataArrayIntR);
-	free(dataArrayIntG);
-	free(dataArrayIntB);
 }
 
 void qSort(int* a, int l, int r)
