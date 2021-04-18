@@ -330,6 +330,8 @@ void BrightnessConvertionPGMMultithread(unsigned int* dataArray, int size) {
 
 	}
 
+
+	free(dataArrayInt);
 }
 
 void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
@@ -480,6 +482,11 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 		}
 
 	}
+
+	free(dataArrayIntR);
+	free(dataArrayIntG);
+	free(dataArrayIntB);
+
 }
 
 void BrightnessConvertionPGMSinglethread(unsigned int* dataArray, int size) 
@@ -529,6 +536,9 @@ void BrightnessConvertionPGMSinglethread(unsigned int* dataArray, int size)
 		}
 
 	}
+
+
+	free(dataArrayInt);
 
 }
 
@@ -657,6 +667,10 @@ void BrightnessConvertionPPMSinglethread(unsigned int* dataArray, int size)
 		}
 
 	}
+
+	free(dataArrayIntR);
+	free(dataArrayIntG);
+	free(dataArrayIntB);
 }
 
 void qSort(int* a, int l, int r)
