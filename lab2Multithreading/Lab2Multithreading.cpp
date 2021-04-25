@@ -42,8 +42,6 @@ int main(int argc, char** argv)
 	try
 	{
 
-
-
 		ifstream in(/*"PPM/199624.ppm"*/inputFile, ios::binary);
 		size = in.seekg(0, ios::end).tellg();
 		if (size == -1)
@@ -285,7 +283,7 @@ void BrightnessConvertionPGMMultithread(unsigned int* dataArray, int size) {
 
 		int i = 0;
 
-#pragma omp for schedule(static)
+#pragma omp for schedule(static, 8)
 		for (i = 0; i < size; i++)
 		{
 			int y = round((dataArray[i] - min) * 255 / (max - min));
@@ -312,7 +310,7 @@ void BrightnessConvertionPGMMultithread(unsigned int* dataArray, int size) {
 		{
 			int i = 0;
 
-#pragma omp for schedule(static)
+#pragma omp for schedule(static, 8)
 			for (i = 0; i < size; i++)
 			{
 				int y = round((dataArray[i] - min) * 255 / (max - min));
@@ -339,7 +337,7 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 	auto sizeOfComponentArray = size / 3;
 
 	int percent = round((size * 0.39) / 100);
-	int roundPercent = round(percent / 3);
+	int roundPercent = percent;//round(percent / 3);
 	int* dataArrayIntR = (int*)calloc(sizeOfComponentArray, sizeof(int));
 	int* dataArrayIntG = (int*)calloc(sizeOfComponentArray, sizeof(int));
 	int* dataArrayIntB = (int*)calloc(sizeOfComponentArray, sizeof(int));
@@ -405,7 +403,7 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 #pragma omp parallel
 		{
 
-			#pragma omp for schedule(static)
+			#pragma omp for schedule(static, 8)
 			for (i = 0; i < size; i++)
 			{
 				int y = round((dataArray[i] - minGlobal) * 255 / (maxGlobal - minGlobal));
@@ -460,7 +458,7 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 #pragma omp parallel
 		{
 			int i = 0;
-			#pragma omp for schedule(static)
+			#pragma omp for schedule(static, 8)
 			for (i = 0; i < size; i++)
 			{
 				int y = round((dataArray[i] - minGlobal) * 255 / (maxGlobal - minGlobal));
@@ -478,6 +476,8 @@ void BrightnessConvertionPPMMultithread(unsigned int* dataArray, int size)
 
 	}
 
+	free(minArr);
+	free(maxArr);
 	free(dataArrayIntR);
 	free(dataArrayIntG);
 	free(dataArrayIntB);
